@@ -261,7 +261,7 @@ class kz2_tTVPDrawDevice : public k2_iTVPDrawDevice
 protected:
 	iTVPLayerManager * findLayerManager(k2_iTVPLayerManager *k2lm) {
 		std::vector<k2z_tTVPLayerManager>::iterator find = std::find(k2managers.begin(), k2managers.end(), k2lm);
-		return (find == k2managers.end()) ? static_cast<iTVPLayerManager*>(&(*find)) : NULL;
+		return (find != k2managers.end()) ? static_cast<iTVPLayerManager*>(&(*find)) : NULL;
 	}
 public:
 	// •\‹L’Zk—ptypedef
