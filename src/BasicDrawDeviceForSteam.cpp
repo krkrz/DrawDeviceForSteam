@@ -120,7 +120,7 @@ bool tTVPBasicDrawDeviceForSteam::GetDirect3D9Device() {
 		return false;
 	}
 	CurrentMonitor = iCurrentMonitor;
-	BackBufferDirty = 1;
+	BackBufferDirty |= 1;
 
 	/*
 	D3DVIEWPORT9 vp;
@@ -234,7 +234,7 @@ HRESULT tTVPBasicDrawDeviceForSteam::DecideD3DPresentParameters() {
 	D3dPP.SwapEffect = D3DSWAPEFFECT_COPY;
 	D3dPP.BackBufferFormat = D3DFMT_UNKNOWN;
 	// for Steam Experimental
-	if (BackBufferDirty < 0) {
+	if (BackBufferDirty & 2) {
 		D3dPP.BackBufferHeight = DispMode.Height;
 		D3dPP.BackBufferWidth = DispMode.Width;
 	} else {
@@ -478,7 +478,7 @@ void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::SetTargetWindow(HWND wnd, bool
 //---------------------------------------------------------------------------
 void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::SetDestRectangle(const tTVPRect & rect)
 {
-	BackBufferDirty = 1;
+	BackBufferDirty |= 1;
 	// 位置だけの変更の場合かどうかをチェックする
 	if(rect.get_width() == DestRect.get_width() && rect.get_height() == DestRect.get_height()) {
 		// 位置だけの変更だ
@@ -525,7 +525,7 @@ void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::NotifyLayerResize(iTVPLayerMan
 {
 	inherited::NotifyLayerResize(manager);
 
-	BackBufferDirty = 1;
+	BackBufferDirty |= 1;
 
 	// テクスチャを捨てて作り直す。
 	CreateTexture();
@@ -750,7 +750,7 @@ void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::EndBitmapCompletion(iTVPLayerM
 
 		if( BackBufferDirty ) {
 			Direct3DDevice->Clear( 0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0,0,0), 1.0, 0 );
-			if( BackBufferDirty > 0 ) BackBufferDirty = 0;
+			if( (BackBufferDirty & 2) == 0 ) BackBufferDirty = 0;
 		}
 
 		//- draw as triangles
@@ -807,7 +807,7 @@ bool TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::SwitchToFullScreen( HWND windo
 	// Direct3D9 でフルスクリーン化するとフォーカスを失うとデバイスをロストするので、そのたびにリセットor作り直しが必要になる。
 	// モーダルウィンドウを使用するシステムでは、これは困るので常にウィンドウモードで行う。
 	// モーダルウィンドウを使用しないシステムにするのなら、フルスクリーンを使用するDrawDeviceを作ると良い。
-	BackBufferDirty = -1;
+	BackBufferDirty |= 2;
 	ShouldShow = true;
 	CheckMonitorMoved();
 	return true;
