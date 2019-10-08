@@ -214,6 +214,13 @@ protected:
 	tTVPRect DestRect;					//!< 描画先位置
 	tTVPRect ClipRect;					//!< クリッピング矩形
 
+	inline tTVPRect GetManagerRect() const {
+		if (ClipRect.is_empty()) return DestRect; // 吉里吉里2ではClipRect概念がない
+		tTVPRect rect(ClipRect);
+		rect.set_offsets(0, 0); // フルスクリーン補正をカット
+		return rect;
+	}
+
 	//! @brief		ManagerSetエラー処理
 	virtual void OnManagerSetError(tjs_error r) {}
 
@@ -240,8 +247,8 @@ public:
 	virtual void TJS_INTF_METHOD RemoveLayerManager(iTVPLayerManager * manager)                                                                    { tjs_error r = ManagerSet.Remove(manager); if (TJS_FAILED(r)) OnManagerSetError(r); }
 
 //---- 描画位置・サイズ関連
-	virtual void TJS_INTF_METHOD SetDestRectangle      (const tTVPRect & rect)                                                                     { DestRect = rect; ManagerSet.SetRect(rect); }
-	virtual void TJS_INTF_METHOD SetClipRectangle      (const tTVPRect & rect)                                                                     { ClipRect = rect; }
+	virtual void TJS_INTF_METHOD SetDestRectangle      (const tTVPRect & rect)                                                                     { DestRect = rect; ManagerSet.SetRect(GetManagerRect()); }
+	virtual void TJS_INTF_METHOD SetClipRectangle      (const tTVPRect & rect)                                                                     { ClipRect = rect; ManagerSet.SetRect(GetManagerRect()); }
 	virtual void TJS_INTF_METHOD GetSrcSize            (tjs_int &w, tjs_int &h)                                                                    { if(!ManagerSet.GetSrcSize(w, h)) w = h = 0; }
 	virtual void TJS_INTF_METHOD NotifyLayerResize     (iTVPLayerManager * manager)                                                                { if (ManagerSet.CanResize(manager)) Window->NotifySrcResize(); }
 	virtual void TJS_INTF_METHOD NotifyLayerImageChange(iTVPLayerManager * manager)                                                                { if (ManagerSet.CanUpdate(manager)) Window->RequestUpdate(); }
