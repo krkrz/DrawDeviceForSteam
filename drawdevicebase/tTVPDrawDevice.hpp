@@ -215,7 +215,7 @@ protected:
 	tTVPRect ClipRect;					//!< クリッピング矩形
 
 	inline tTVPRect GetManagerRect() const {
-		if (ClipRect.is_empty()) return DestRect; // 吉里吉里2ではClipRect概念がない
+		if (ClipRect.is_empty()) return DestRect; // ClipRectが空の場合
 		tTVPRect rect(ClipRect);
 		rect.set_offsets(0, 0); // フルスクリーン補正をカット
 		return rect;

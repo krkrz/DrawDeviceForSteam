@@ -30,13 +30,6 @@ void tTVPBasicDrawDeviceForSteam::InitDrawDeviceOptions()
 //---------------------------------------------------------------------------
 
 
-// tp_stub wrapper
-extern bool        IsKirikiriZ(); // cf. v2link.cpp
-extern void        Krkr2EnsureDirect3DObject();      // Krkr2DrawDeviceWrapper.cpp
-extern IDirect3D9* Krkr2GetDirect3DObjectNoAddRef(); // Krkr2DrawDeviceWrapper.cpp
-void        tTVPBasicDrawDeviceForSteam::EnsureDirect3DObject()      { if (   IsKirikiriZ()) TVPEnsureDirect3DObject(); else  Krkr2EnsureDirect3DObject(); }
-IDirect3D9* tTVPBasicDrawDeviceForSteam::GetDirect3DObjectNoAddRef() { return IsKirikiriZ()? TVPGetDirect3DObjectNoAddRef() : Krkr2GetDirect3DObjectNoAddRef(); }
-
 
 //---------------------------------------------------------------------------
 tTVPBasicDrawDeviceForSteam::tTVPBasicDrawDeviceForSteam()

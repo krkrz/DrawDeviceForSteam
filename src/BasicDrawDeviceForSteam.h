@@ -64,10 +64,12 @@ private:
 	// [MODIFIED]
 	virtual void OnManagerSetError(tjs_error r);
 	static void InitDrawDeviceOptions();
-	static void EnsureDirect3DObject();
-	static IDirect3D9* GetDirect3DObjectNoAddRef();
 	static tjs_int OptionsGeneration;
 	static bool    ZoomInterpolation;
+protected:
+	// Z専用メソッドのため2での互換処理が必要な場合は適宜オーバーライドすること
+	virtual void        EnsureDirect3DObject()      const {        TVPEnsureDirect3DObject();      }
+	virtual IDirect3D9* GetDirect3DObjectNoAddRef() const { return TVPGetDirect3DObjectNoAddRef(); }
 
 public:
 	void SetToRecreateDrawer() { DestroyD3DDevice(); }

@@ -3,14 +3,13 @@
 #include "simplebinder.hpp"
 
 #include "BasicDrawDeviceForSteam.h"
-
-#ifndef USE_K2DD
-#define USE_K2DD 0
-#endif
+#include "Krkr2DrawDeviceWrapper.hpp"
 
 #ifndef USE_TJSTEST
 #define USE_TJSTEST 0
 #endif
+
+extern bool        IsKirikiriZ(); // ãgó¢ãgó¢éÌï îªíË (cf. v2link.cpp)
 
 // îjä¸í ímÉCÉìÉ^Å[ÉtÉFÅ[ÉX
 struct iDeviceDestructNotify {
@@ -22,74 +21,41 @@ class DrawDeviceInterface
 	: public tTVPBasicDrawDeviceForSteam {
 	typedef  tTVPBasicDrawDeviceForSteam inherited;
 	iDeviceDestructNotify *owner;
+	kz2_tTVPDrawDevice k2dd; // ãgó¢ãgó¢2å¸ÇØDrawDeviceÉCÉìÉ^Å[ÉtÉFÅ[ÉXå›ä∑ÉâÉbÉpÅ[
+	bool kz;
 public:
-	DrawDeviceInterface(iDeviceDestructNotify *owner) : owner(owner), inherited() {}
+	DrawDeviceInterface(iDeviceDestructNotify *owner) : owner(owner), k2dd(*this), kz(IsKirikiriZ()), inherited() {}
 	virtual void TJS_INTF_METHOD Destruct() {
 		owner->onDeviceDestruct();
 		inherited::Destruct();
 	}
 	tTVInteger GetInterface() const {
-		return reinterpret_cast<tTVInteger>(static_cast<const iTVPDrawDevice*>(this));
+		return kz ? reinterpret_cast<tTVInteger>(static_cast<const iTVPDrawDevice*>(this))
+			:       reinterpret_cast<tTVInteger>(static_cast<const k2_iTVPDrawDevice*>(&k2dd));
 	}
-};
 
-#if USE_K2DD
-#include "Krkr2DrawDeviceWrapper.hpp"
-// (Ç†Ç‹ÇËà”ñ°ÇÕÇ»Ç¢ÇØÇ«)ãgó¢ãgó¢2Ç≈Ç‡égÇ¶ÇÈÇÊÇ§Ç…Ç∑ÇÈç◊çH(cf. Krkr2DrawDeviceWrapper.hpp)
-class DrawDeviceForKrkr2
-	: public kz2_tTVPDrawDevice {
-	typedef  kz2_tTVPDrawDevice inherited;
-public:
-	DrawDeviceForKrkr2(iTVPDrawDevice *dd) : inherited(*dd) {}
-	virtual void TJS_INTF_METHOD Destruct() {
-		inherited::Destruct();
-		delete this;
-	}
-	tTVInteger GetInterface() const {
-		return reinterpret_cast<tTVInteger>(static_cast<const k2_iTVPDrawDevice*>(this));
-	}
+	// ãgó¢ãgó¢2å›ä∑èàóù
+	virtual void        EnsureDirect3DObject()      const { if    (kz)  inherited::EnsureDirect3DObject(); else  Krkr2EnsureDirect3DObject();      }
+	virtual IDirect3D9* GetDirect3DObjectNoAddRef() const { return kz ? inherited::GetDirect3DObjectNoAddRef() : Krkr2GetDirect3DObjectNoAddRef(); }
 };
-#endif
 
 
 ////////////////////////////////////////////////////////////////
 // TJSãÛä‘Ç…DrawDeviceÉNÉâÉXÇìoò^
 
-extern bool IsKirikiri2(); // cf. v2link.cpp
-
 class DrawDeviceClass : public iDeviceDestructNotify {
 	DrawDeviceInterface *ddi;
-#if USE_K2DD
-	DrawDeviceForKrkr2  *dk2;
-#endif
 public:
 	DrawDeviceClass() : ddi(0)
-#if USE_K2DD
-		, dk2(0)
-#endif
 	{
 		ddi = new DrawDeviceInterface(this);
-		if (IsKirikiri2()) {
-#if USE_K2DD
-			dk2 = new DrawDeviceForKrkr2(ddi);
-#else
-			TVPThrowExceptionMessage(TJS_W("BasicDrawDeviceForSteam: Kirikiri2 not supported"));
-#endif
-		}
 	}
 	~DrawDeviceClass() {
-#if USE_K2DD
-		if (dk2) dk2->Destruct(); // ddiÇ‡ïπÇπÇƒDestructÇ≥ÇÍÇÈ
-		else
-#endif
 		if (ddi) ddi->Destruct();
 		ClearInterface();
 	}
-	virtual void onDeviceDestruct() { ClearInterface(); }
+	virtual void onDeviceDestruct() { ClearInterface(); } // called from iDeviceDestructNotify
 	void ClearInterface() {
-#if USE_K2DD
-		dk2 = 0;
-#endif
 		ddi = 0;
 	}
 
@@ -106,12 +72,7 @@ public:
 	}
 
 	tjs_error GetInterface(tTJSVariant *result) const {
-		if (result) *result = (
-#if USE_K2DD
-			dk2 ? dk2->GetInterface() :
-#endif
-			ddi ? ddi->GetInterface() :
-			0);
+		if (result) *result = ddi ? ddi->GetInterface() : 0;
 		return TJS_S_OK;
 	}
 

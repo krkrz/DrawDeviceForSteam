@@ -277,6 +277,7 @@ public:
 		window.setInterface(NULL);
 		k2managers.clear();
 		dd.Destruct();
+		// ここでは自身を破棄しないので注意（メンバー変数で使用するケースを想定）
 	}
 
 //---- window interface 関連
@@ -302,7 +303,7 @@ public:
 
 //---- 描画位置・サイズ関連
 	virtual void TJS_INTF_METHOD SetTargetWindow       (HWND wnd, bool is_main)                                { dd.SetTargetWindow(wnd, is_main); }
-	virtual void TJS_INTF_METHOD SetDestRectangle      (const tTVPRect & rect)                                 { dd.SetDestRectangle(rect); }
+	virtual void TJS_INTF_METHOD SetDestRectangle      (const tTVPRect & rect)                                 { dd.SetClipRectangle(rect); dd.SetDestRectangle(rect); } // [MEMO] Clip=Dest として動作させる
 //	virtual void TJS_INTF_METHOD SetClipRectangle      (const tTVPRect & rect) = 0;
 	virtual void TJS_INTF_METHOD GetSrcSize            (tjs_int &w, tjs_int &h)                                { dd.GetSrcSize(w, h); }
 	virtual void TJS_INTF_METHOD NotifyLayerResize     (K2LM* k2lm)                                            { FINDLM(k2lm, kzlm, NotifyLayerResize,      (kzlm)); }
@@ -364,3 +365,8 @@ public:
 //	virtual bool TJS_INTF_METHOD WaitForVBlank( tjs_int* in_vblank, tjs_int* delayed ) = 0;
 };
 
+//---------------------------------------------------------------------------
+// 吉里吉里2向け D3D9 初期化処理 
+
+extern void        Krkr2EnsureDirect3DObject();
+extern IDirect3D9* Krkr2GetDirect3DObjectNoAddRef();
