@@ -14,6 +14,7 @@ struct iTVPLayerManagerSet
 {
 	inline tjs_error Add    (iTVPLayerManager * manager) { return TJS_S_OK; }
 	inline tjs_error Remove (iTVPLayerManager * manager) { return TJS_S_OK; }
+	inline bool IsEmpty() { return true; }
 
 	inline void SetRect(const tTVPRect & rect)           {}
 	inline bool GetSrcSize(tjs_int &w, tjs_int &h) const { return false; }
@@ -86,6 +87,7 @@ public:
 		}
 		return TJS_S_OK;
 	}
+	inline bool IsEmpty() { return !ManagerExists(); }
 
 	inline void SetRect(const tTVPRect & rect)           { DestRect = rect; }
 	inline bool GetSrcSize(tjs_int &w, tjs_int &h) const { return Manager && Manager->GetPrimaryLayerSize(w, h); }
@@ -224,6 +226,12 @@ protected:
 	//! @brief		ManagerSetエラー処理
 	virtual void OnManagerSetError(tjs_error r) {}
 
+	//! @brief		レイヤマネージャが全部削除された時の処理（Windowデストラクト時）
+	virtual void OnManagerSetEmpty() {
+		// [XXX]以降は HWND は更新しない
+		this->SetTargetWindow(NULL, false);
+	}
+
 public:
 	//! @brief		コンストラクタ
 	tTVPDrawDeviceTmpl() : Window(NULL) {
@@ -244,9 +252,10 @@ public:
 
 //---- LayerManager の管理関連
 	virtual void TJS_INTF_METHOD AddLayerManager   (iTVPLayerManager * manager)                                                                    { tjs_error r = ManagerSet.Add   (manager); if (TJS_FAILED(r)) OnManagerSetError(r); }
-	virtual void TJS_INTF_METHOD RemoveLayerManager(iTVPLayerManager * manager)                                                                    { tjs_error r = ManagerSet.Remove(manager); if (TJS_FAILED(r)) OnManagerSetError(r); }
+	virtual void TJS_INTF_METHOD RemoveLayerManager(iTVPLayerManager * manager)                                                                    { tjs_error r = ManagerSet.Remove(manager); if (TJS_FAILED(r)) OnManagerSetError(r); if (ManagerSet.IsEmpty()) OnManagerSetEmpty(); }
 
 //---- 描画位置・サイズ関連
+	virtual void TJS_INTF_METHOD SetTargetWindow       (HWND wnd, bool is_main)                                                                    {} // [STUB] do nothing
 	virtual void TJS_INTF_METHOD SetDestRectangle      (const tTVPRect & rect)                                                                     { DestRect = rect; ManagerSet.SetRect(GetManagerRect()); }
 	virtual void TJS_INTF_METHOD SetClipRectangle      (const tTVPRect & rect)                                                                     { ClipRect = rect; ManagerSet.SetRect(GetManagerRect()); }
 	virtual void TJS_INTF_METHOD GetSrcSize            (tjs_int &w, tjs_int &h)                                                                    { if(!ManagerSet.GetSrcSize(w, h)) w = h = 0; }
