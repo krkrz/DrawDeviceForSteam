@@ -238,7 +238,9 @@ public:
 	virtual void TJS_INTF_METHOD SetImeMode(tTVPImeMode mode)         { if (k2) k2->SetImeMode(mode); }
 	virtual void TJS_INTF_METHOD ResetImeMode()                       { if (k2) k2->ResetImeMode(); }
 	virtual void TJS_INTF_METHOD RequestUpdate()                      { if (k2) k2->RequestUpdate(); }
-	virtual iTJSDispatch2 * GetWindowDispatch()                       { return k2 ? k2->GetWindowDispatch() : NULL; } // TJS_INTF_METHOD ‚¶‚á‚È‚¢?
+	virtual iTJSDispatch2 * GetWindowDispatch()                       { return k2 ? GetWindowDispatch(k2) : NULL; }
+private:
+	static iTJSDispatch2 * GetWindowDispatch(k2_iTVPWindow *);  // TJS_INTF_METHOD ‚¶‚á‚È‚¢‚Æ’¼ÚŒÄ‚×‚È‚¢‚Ì‚Å‹K–ñ‹zû‚Ì×H‚ğ“ü‚ê‚ÄŒÄ‚Ô•K—v‚ª‚ ‚é
 };
 
 

@@ -1,5 +1,8 @@
-#include <windows.h>
-#include "tp_stub.h"
+#include "Krkr2DrawDeviceWrapper.hpp"
+
+//---------------------------------------------------------------------------
+// ãgó¢ãgó¢2å¸ÇØ D3D9 ä÷òAèàóù
+
 #include <d3d9.h>
 
 static IDirect3D9 *TVPDirect3D=NULL;
@@ -66,3 +69,28 @@ IDirect3D9 * Krkr2GetDirect3DObjectNoAddRef()
 	// retrieves IDirect3D9 interface
 	return TVPDirect3D;
 }
+
+//---------------------------------------------------------------------------
+// ãgó¢ãgó¢2óp GetWindowDispatch åƒÇ—èoÇµãKñÒãzé˚
+
+#ifdef _MSC_VER
+
+#pragma optimize("", off)
+iTJSDispatch2 * k2z_tTVPWindow::GetWindowDispatch(k2_iTVPWindow *window) {
+	void *method = (*(reinterpret_cast<void***>(window)))[12]; // __vfptr[12] == GetWindowDispatch
+	iTJSDispatch2 * result = 0;
+	__asm {
+		mov eax, window // eax = this
+		call method
+		mov result, eax
+	}
+	return result;
+}
+#pragma optimize("", on)
+
+//#elif defined(__GNUC__)
+#else
+#error GetWindowDispatch : compiler not supported.
+// do nothing
+#endif
+
