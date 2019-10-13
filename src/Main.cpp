@@ -2,7 +2,7 @@
 #include "tp_stub.h"
 #include "simplebinder.hpp"
 
-#include "BasicDrawDeviceForSteam.h"
+#include "DrawDeviceForSteam.hpp"
 #include "Krkr2DrawDeviceWrapper.hpp"
 
 #ifndef USE_TJSTEST
@@ -16,8 +16,8 @@ struct iDeviceDestructNotify {
 
 // このプラグインで提供するDrawDeviceクラス（tTVPBasicDrawDeviceForSteam +α）
 class DrawDeviceInterface
-	: public tTVPBasicDrawDeviceForSteam {
-	typedef  tTVPBasicDrawDeviceForSteam inherited;
+	: public tTVPDrawDeviceForSteam {
+	typedef  tTVPDrawDeviceForSteam inherited;
 	iDeviceDestructNotify *owner;
 	Krkr2DrawDeviceWrapper k2dd; // 吉里吉里2向けDrawDeviceインターフェース互換ラッパー
 public:
@@ -62,6 +62,7 @@ public:
 		 .Class(name, &CreateNew)
 		 .Property(TJS_W("interface"),   &GetInterface, 0)
 		 .Function(TJS_W("recreate"),    &Recreate)
+		 .Function(TJS_W("present"),     &Present)
 		 .IsValid());
 	}
 
@@ -74,6 +75,13 @@ public:
 		if (ddi) {
 			ddi->SetToRecreateDrawer();
 			ddi->EnsureDevice();
+		}
+		return TJS_S_OK;
+	}
+
+	tjs_error Present(tTJSVariant *result) {
+		if (ddi) {
+			ddi->Present();
 		}
 		return TJS_S_OK;
 	}

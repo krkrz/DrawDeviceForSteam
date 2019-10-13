@@ -1,6 +1,6 @@
 
 #define NOMINMAX
-#include "BasicDrawDeviceForSteam.h"
+#include "BasicDrawDevice.h"
 #include "ErrorCode.hpp"
 
 #include <mmsystem.h>
@@ -9,10 +9,10 @@
 //---------------------------------------------------------------------------
 // オプション
 //---------------------------------------------------------------------------
-tjs_int tTVPBasicDrawDeviceForSteam::OptionsGeneration = 0;
-bool    tTVPBasicDrawDeviceForSteam::ZoomInterpolation = true;
+tjs_int tTVPBasicDrawDevice::OptionsGeneration = 0;
+bool    tTVPBasicDrawDevice::ZoomInterpolation = true;
 //---------------------------------------------------------------------------
-void tTVPBasicDrawDeviceForSteam::InitDrawDeviceOptions()
+void tTVPBasicDrawDevice::InitDrawDeviceOptions()
 {
 	tjs_int gen = TVPGetCommandLineArgumentGeneration();
 	if (OptionsGeneration != gen) {
@@ -32,7 +32,7 @@ void tTVPBasicDrawDeviceForSteam::InitDrawDeviceOptions()
 
 
 //---------------------------------------------------------------------------
-tTVPBasicDrawDeviceForSteam::tTVPBasicDrawDeviceForSteam()
+tTVPBasicDrawDevice::tTVPBasicDrawDevice()
 {
 	InitDrawDeviceOptions(); // read and initialize options
 	TargetWindow = NULL;
@@ -50,30 +50,30 @@ tTVPBasicDrawDeviceForSteam::tTVPBasicDrawDeviceForSteam()
 	ZeroMemory( &DispMode, sizeof(DispMode) );
 }
 //---------------------------------------------------------------------------
-tTVPBasicDrawDeviceForSteam::~tTVPBasicDrawDeviceForSteam()
+tTVPBasicDrawDevice::~tTVPBasicDrawDevice()
 {
 	DestroyD3DDevice();
 }
 //---------------------------------------------------------------------------
-void tTVPBasicDrawDeviceForSteam::DestroyD3DDevice() {
+void tTVPBasicDrawDevice::DestroyD3DDevice() {
 	DestroyTexture();
 	if(Direct3DDevice) Direct3DDevice->Release(), Direct3DDevice = NULL;
 	if(Direct3D) Direct3D = NULL;
 }
 //---------------------------------------------------------------------------
-void tTVPBasicDrawDeviceForSteam::DestroyTexture() {
+void tTVPBasicDrawDevice::DestroyTexture() {
 	if(TextureBuffer && Texture) Texture->UnlockRect(0), TextureBuffer = NULL;
 	if(Texture) Texture->Release(), Texture = NULL;
 }
 //---------------------------------------------------------------------------
-void tTVPBasicDrawDeviceForSteam::InvalidateAll()
+void tTVPBasicDrawDevice::InvalidateAll()
 {
 	// レイヤ演算結果をすべてリクエストする
 	// サーフェースが lost した際に内容を再構築する目的で用いる
 	RequestInvalidation(tTVPRect(0, 0, DestRect.get_width(), DestRect.get_height()));
 }
 //---------------------------------------------------------------------------
-void tTVPBasicDrawDeviceForSteam::CheckMonitorMoved() {
+void tTVPBasicDrawDevice::CheckMonitorMoved() {
 	UINT iCurrentMonitor = GetMonitorNumber( TargetWindow );
 	if( CurrentMonitor != iCurrentMonitor ) {
 		// モニタ移動が発生しているので、デバイスを再生成する
@@ -81,12 +81,12 @@ void tTVPBasicDrawDeviceForSteam::CheckMonitorMoved() {
 	}
 }
 //---------------------------------------------------------------------------
-bool tTVPBasicDrawDeviceForSteam::IsTargetWindowActive() const {
+bool tTVPBasicDrawDevice::IsTargetWindowActive() const {
 	if( TargetWindow == NULL ) return false;
 	return ::GetForegroundWindow() == TargetWindow;
 }
 //---------------------------------------------------------------------------
-bool tTVPBasicDrawDeviceForSteam::GetDirect3D9Device() {
+bool tTVPBasicDrawDevice::GetDirect3D9Device() {
 	DestroyD3DDevice();
 
 	EnsureDirect3DObject();
@@ -157,7 +157,7 @@ bool tTVPBasicDrawDeviceForSteam::GetDirect3D9Device() {
 	return true;
 }
 //---------------------------------------------------------------------------
-HRESULT tTVPBasicDrawDeviceForSteam::InitializeDirect3DState() {
+HRESULT tTVPBasicDrawDevice::InitializeDirect3DState() {
 	HRESULT	hr;
 	D3DCAPS9	d3dcaps;
 	if( FAILED( hr = Direct3DDevice->GetDeviceCaps( &d3dcaps ) ) )
@@ -201,7 +201,7 @@ HRESULT tTVPBasicDrawDeviceForSteam::InitializeDirect3DState() {
 	return S_OK;
 }
 //---------------------------------------------------------------------------
-UINT tTVPBasicDrawDeviceForSteam::GetMonitorNumber( HWND window )
+UINT tTVPBasicDrawDevice::GetMonitorNumber( HWND window )
 {
 	if( Direct3D == NULL || window == NULL ) return D3DADAPTER_DEFAULT;
 	HMONITOR windowMonitor = ::MonitorFromWindow( window, MONITOR_DEFAULTTOPRIMARY );
@@ -216,7 +216,7 @@ UINT tTVPBasicDrawDeviceForSteam::GetMonitorNumber( HWND window )
 	return iCurrentMonitor;
 }
 //---------------------------------------------------------------------------
-HRESULT tTVPBasicDrawDeviceForSteam::DecideD3DPresentParameters() {
+HRESULT tTVPBasicDrawDevice::DecideD3DPresentParameters() {
 	HRESULT			hr;
 	UINT iCurrentMonitor = GetMonitorNumber(TargetWindow);
 	if( FAILED( hr = Direct3D->GetAdapterDisplayMode( iCurrentMonitor, &DispMode ) ) )
@@ -240,7 +240,7 @@ HRESULT tTVPBasicDrawDeviceForSteam::DecideD3DPresentParameters() {
 	return S_OK;
 }
 //---------------------------------------------------------------------------
-bool tTVPBasicDrawDeviceForSteam::CreateD3DDevice()
+bool tTVPBasicDrawDevice::CreateD3DDevice()
 {
 	// Direct3D デバイス、テクスチャなどを作成する
 	DestroyD3DDevice();
@@ -257,7 +257,7 @@ bool tTVPBasicDrawDeviceForSteam::CreateD3DDevice()
 	return false;
 }
 //---------------------------------------------------------------------------
-bool tTVPBasicDrawDeviceForSteam::CreateTexture() {
+bool tTVPBasicDrawDevice::CreateTexture() {
 	DestroyTexture();
 	tjs_int w, h;
 	GetSrcSize( w, h );
@@ -304,7 +304,7 @@ bool tTVPBasicDrawDeviceForSteam::CreateTexture() {
 	return true;
 }
 //---------------------------------------------------------------------------
-void tTVPBasicDrawDeviceForSteam::EnsureDevice()
+void tTVPBasicDrawDevice::EnsureDevice()
 {
 	InitDrawDeviceOptions();
 	if( TargetWindow ) {
@@ -346,7 +346,7 @@ void tTVPBasicDrawDeviceForSteam::EnsureDevice()
 	}
 }
 //---------------------------------------------------------------------------
-void tTVPBasicDrawDeviceForSteam::TryRecreateWhenDeviceLost()
+void tTVPBasicDrawDevice::TryRecreateWhenDeviceLost()
 {
 	bool success = false;
 	if( Direct3DDevice ) {
@@ -377,7 +377,7 @@ void tTVPBasicDrawDeviceForSteam::TryRecreateWhenDeviceLost()
 #define ERR2LOG(HR, MES) \
 case HR: Logger::AddLog( ErrorCode:: MES ); break
 
-void tTVPBasicDrawDeviceForSteam::ErrorToLog( HRESULT hr ) {
+void tTVPBasicDrawDevice::ErrorToLog( HRESULT hr ) {
 	switch( hr ) {
 		ERR2LOG( D3DERR_DEVICELOST,                  D3dErrDeviceLost );
 		ERR2LOG( D3DERR_DRIVERINTERNALERROR,         D3dErrDriverIinternalError );
@@ -446,7 +446,7 @@ void tTVPBasicDrawDeviceForSteam::ErrorToLog( HRESULT hr ) {
 #undef ERR2LOG
 
 //---------------------------------------------------------------------------
-void tTVPBasicDrawDeviceForSteam::OnManagerSetError(tjs_error r)
+void tTVPBasicDrawDevice::OnManagerSetError(tjs_error r)
 {
 	switch (r) {
 	case TJS_E_ACCESSDENYED:   Logger::ThrowException( ErrorCode::DoesNotSupporteLayerManagerMoreThanOne ); break;
@@ -454,14 +454,14 @@ void tTVPBasicDrawDeviceForSteam::OnManagerSetError(tjs_error r)
 	}
 }
 //---------------------------------------------------------------------------
-void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::AddLayerManager(iTVPLayerManager * manager)
+void TJS_INTF_METHOD tTVPBasicDrawDevice::AddLayerManager(iTVPLayerManager * manager)
 {
 	inherited::AddLayerManager(manager);
 
 	manager->SetDesiredLayerType(ltOpaque); // ltOpaque な出力を受け取りたい
 }
 //---------------------------------------------------------------------------
-void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::SetTargetWindow(HWND wnd, bool is_main)
+void TJS_INTF_METHOD tTVPBasicDrawDevice::SetTargetWindow(HWND wnd, bool is_main)
 {
 	InitDrawDeviceOptions();
 	DestroyD3DDevice();
@@ -469,7 +469,7 @@ void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::SetTargetWindow(HWND wnd, bool
 	IsMainWindow = is_main;
 }
 //---------------------------------------------------------------------------
-void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::SetDestRectangle(const tTVPRect & rect)
+void TJS_INTF_METHOD tTVPBasicDrawDevice::SetDestRectangle(const tTVPRect & rect)
 {
 	BackBufferDirty |= 1;
 	// 位置だけの変更の場合かどうかをチェックする
@@ -478,11 +478,8 @@ void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::SetDestRectangle(const tTVPRec
 		inherited::SetDestRectangle(rect);
 	} else {
 		// サイズも違う
-		if( true ) { // for Steam Experimental : always DestroyD3DDevice
-//		if( rect.get_width() > (tjs_int)D3dPP.BackBufferWidth || rect.get_height() > (tjs_int)D3dPP.BackBufferHeight ) {
-			// バックバッファサイズよりも大きいサイズが指定された場合一度破棄する。後のEnsureDeviceで再生成される。
-			DestroyD3DDevice();
-		}
+		CheckRecreateOnSizeChanged(rect); // 必要に応じて DestroyD3DDevice() を呼んで recreate する
+
 		bool success = true;
 		inherited::SetDestRectangle(rect);
 
@@ -514,7 +511,15 @@ void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::SetDestRectangle(const tTVPRec
 	}
 }
 //---------------------------------------------------------------------------
-void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::NotifyLayerResize(iTVPLayerManager * manager)
+void tTVPBasicDrawDevice::CheckRecreateOnSizeChanged(const tTVPRect & rect)
+{
+	if( rect.get_width() > (tjs_int)D3dPP.BackBufferWidth || rect.get_height() > (tjs_int)D3dPP.BackBufferHeight ) {
+		// バックバッファサイズよりも大きいサイズが指定された場合一度破棄する。後のEnsureDeviceで再生成される。
+		DestroyD3DDevice();
+	}
+}
+//---------------------------------------------------------------------------
+void TJS_INTF_METHOD tTVPBasicDrawDevice::NotifyLayerResize(iTVPLayerManager * manager)
 {
 	inherited::NotifyLayerResize(manager);
 
@@ -524,7 +529,7 @@ void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::NotifyLayerResize(iTVPLayerMan
 	CreateTexture();
 }
 //---------------------------------------------------------------------------
-void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::Show()
+void TJS_INTF_METHOD tTVPBasicDrawDevice::Show()
 {
 	if(!TargetWindow) return;
 	if(!Texture) return;
@@ -557,7 +562,7 @@ void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::Show()
 	}
 }
 //---------------------------------------------------------------------------
-bool TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::WaitForVBlank( tjs_int* in_vblank, tjs_int* delayed )
+bool TJS_INTF_METHOD tTVPBasicDrawDevice::WaitForVBlank( tjs_int* in_vblank, tjs_int* delayed )
 {
 	if( Direct3DDevice == NULL ) return false;
 
@@ -595,7 +600,7 @@ bool TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::WaitForVBlank( tjs_int* in_vbl
 	return true;
 }
 //---------------------------------------------------------------------------
-void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::StartBitmapCompletion(iTVPLayerManager * manager)
+void TJS_INTF_METHOD tTVPBasicDrawDevice::StartBitmapCompletion(iTVPLayerManager * manager)
 {
 	EnsureDevice();
 
@@ -623,7 +628,7 @@ void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::StartBitmapCompletion(iTVPLaye
 	}
 }
 //---------------------------------------------------------------------------
-void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::NotifyBitmapCompleted(iTVPLayerManager * manager,
+void TJS_INTF_METHOD tTVPBasicDrawDevice::NotifyBitmapCompleted(iTVPLayerManager * manager,
 	tjs_int x, tjs_int y, const void * bits, const BITMAPINFO * bitmapinfo,
 	const tTVPRect &cliprect, tTVPLayerType type, tjs_int opacity)
 {
@@ -674,7 +679,7 @@ void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::NotifyBitmapCompleted(iTVPLaye
 	}
 }
 //---------------------------------------------------------------------------
-void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::EndBitmapCompletion(iTVPLayerManager * manager)
+void TJS_INTF_METHOD tTVPBasicDrawDevice::EndBitmapCompletion(iTVPLayerManager * manager)
 {
 	if(!TargetWindow) return;
 	if(!Texture) return;
@@ -789,12 +794,12 @@ got_error:
 	}
 }
 //---------------------------------------------------------------------------
-void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::SetShowUpdateRect(bool b)
+void TJS_INTF_METHOD tTVPBasicDrawDevice::SetShowUpdateRect(bool b)
 {
 	DrawUpdateRectangle = b;
 }
 //---------------------------------------------------------------------------
-bool TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::SwitchToFullScreen( HWND window, tjs_uint w, tjs_uint h, tjs_uint bpp, tjs_uint color, bool changeresolution )
+bool TJS_INTF_METHOD tTVPBasicDrawDevice::SwitchToFullScreen( HWND window, tjs_uint w, tjs_uint h, tjs_uint bpp, tjs_uint color, bool changeresolution )
 {
 	// フルスクリーン化の処理はなにも行わない、互換性のためにウィンドウを全画面化するのみで処理する
 	// Direct3D9 でフルスクリーン化するとフォーカスを失うとデバイスをロストするので、そのたびにリセットor作り直しが必要になる。
@@ -806,7 +811,7 @@ bool TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::SwitchToFullScreen( HWND windo
 	return true;
 }
 //---------------------------------------------------------------------------
-void TJS_INTF_METHOD tTVPBasicDrawDeviceForSteam::RevertFromFullScreen( HWND window, tjs_uint w, tjs_uint h, tjs_uint bpp, tjs_uint color )
+void TJS_INTF_METHOD tTVPBasicDrawDevice::RevertFromFullScreen( HWND window, tjs_uint w, tjs_uint h, tjs_uint bpp, tjs_uint color )
 {
 	BackBufferDirty = 1;
 	ShouldShow = true;

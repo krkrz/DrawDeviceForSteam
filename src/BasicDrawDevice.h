@@ -6,10 +6,10 @@
 //---------------------------------------------------------------------------
 //! @brief		DrawDeviceSteam(BasicDrawDeviceからの若干の拡張)
 //---------------------------------------------------------------------------
-class tTVPBasicDrawDeviceForSteam : public tTVPDrawDevice
+class tTVPBasicDrawDevice : public tTVPDrawDevice
 {
 	typedef tTVPDrawDevice inherited;
-	typedef tTVPBasicDrawDeviceForSteam selfclass;
+	typedef tTVPBasicDrawDevice selfclass;
 
 	HWND TargetWindow;
 	bool IsMainWindow;
@@ -34,10 +34,10 @@ class tTVPBasicDrawDeviceForSteam : public tTVPDrawDevice
 	tjs_uint VsyncInterval;
 
 public:
-	tTVPBasicDrawDeviceForSteam(); //!< コンストラクタ
+	tTVPBasicDrawDevice(); //!< コンストラクタ
 
 protected: // [MODIFIED]
-	~tTVPBasicDrawDeviceForSteam(); //!< デストラクタ
+	~tTVPBasicDrawDevice(); //!< デストラクタ
 
 private:
 	void InvalidateAll();
@@ -70,6 +70,10 @@ protected:
 	// Z専用メソッドのため2での互換処理が必要な場合は適宜オーバーライドすること
 	virtual void        EnsureDirect3DObject()      const {        TVPEnsureDirect3DObject();      }
 	virtual IDirect3D9* GetDirect3DObjectNoAddRef() const { return TVPGetDirect3DObjectNoAddRef(); }
+
+	virtual void CheckRecreateOnSizeChanged(const tTVPRect & rect);
+	bool GetShouldShow() const { return ShouldShow;     }
+	void SetShouldShow(bool b) {        ShouldShow = b; }
 
 public:
 	void SetToRecreateDrawer() { DestroyD3DDevice(); }
