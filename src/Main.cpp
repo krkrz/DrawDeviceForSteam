@@ -9,8 +9,6 @@
 #define USE_TJSTEST 0
 #endif
 
-extern bool        IsKirikiriZ(); // 吉里吉里種別判定 (cf. v2link.cpp)
-
 // 破棄通知インターフェース
 struct iDeviceDestructNotify {
 	virtual void onDeviceDestruct() = 0;
@@ -21,22 +19,18 @@ class DrawDeviceInterface
 	: public tTVPBasicDrawDeviceForSteam {
 	typedef  tTVPBasicDrawDeviceForSteam inherited;
 	iDeviceDestructNotify *owner;
-	kz2_tTVPDrawDevice k2dd; // 吉里吉里2向けDrawDeviceインターフェース互換ラッパー
-	bool kz;
+	Krkr2DrawDeviceWrapper k2dd; // 吉里吉里2向けDrawDeviceインターフェース互換ラッパー
 public:
-	DrawDeviceInterface(iDeviceDestructNotify *owner) : owner(owner), k2dd(*this), kz(IsKirikiriZ()), inherited() {}
+	DrawDeviceInterface(iDeviceDestructNotify *owner) : owner(owner), k2dd(this), inherited() {}
 	virtual void TJS_INTF_METHOD Destruct() {
-		owner->onDeviceDestruct();
+		owner->onDeviceDestruct(); // TJSクラスインスタンス側に破棄通知
 		inherited::Destruct();
 	}
-	tTVInteger GetInterface() const {
-		return kz ? reinterpret_cast<tTVInteger>(static_cast<const iTVPDrawDevice*>(this))
-			:       reinterpret_cast<tTVInteger>(static_cast<const k2_iTVPDrawDevice*>(&k2dd));
-	}
+	tTVInteger GetInterface() const { return k2dd.SwitchGetInterface(); } // 吉里吉里Zか2でインターフェースを自動で切り替える
 
-	// 吉里吉里2互換処理
-	virtual void        EnsureDirect3DObject()      const { if    (kz)  inherited::EnsureDirect3DObject(); else  Krkr2EnsureDirect3DObject();      }
-	virtual IDirect3D9* GetDirect3DObjectNoAddRef() const { return kz ? inherited::GetDirect3DObjectNoAddRef() : Krkr2GetDirect3DObjectNoAddRef(); }
+	// 吉里吉里Z通常処理/吉里吉里2互換処理の切り替え
+	virtual void        EnsureDirect3DObject()      const {        k2dd.SwitchEnsureDirect3DObject();      }
+	virtual IDirect3D9* GetDirect3DObjectNoAddRef() const { return k2dd.SwitchGetDirect3DObjectNoAddRef(); }
 };
 
 
@@ -131,7 +125,7 @@ bool Entry(bool link) {
 		true);
 }
 
-bool onV2Link()   { return Entry(true);  }
-bool onV2Unlink() { return Entry(false); }
-void onV2Detach() {}
+bool onV2Link()   {                                      return Entry(true);  }
+bool onV2Unlink() { Krkr2DrawDeviceWrapper::DetachAll(); return Entry(false); }
+void onV2Detach() { Krkr2DrawDeviceWrapper::DetachAll(); }
 
