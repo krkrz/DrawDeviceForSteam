@@ -74,7 +74,7 @@ public:
 		if (manager) {
 			if (Manager) return TJS_E_ACCESSDENYED;
 			Manager =  manager;
-			Manager->AddRef();
+			manager->AddRef();
 		}
 		return TJS_S_OK;
 	}
@@ -82,7 +82,7 @@ public:
 		if (manager) {
 			if (!Manager || Manager != manager) return TJS_E_MEMBERNOTFOUND;
 			Manager = NULL;
-			Manager->Release();
+			manager->Release();
 		}
 		return TJS_S_OK;
 	}
