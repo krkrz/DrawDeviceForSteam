@@ -130,6 +130,9 @@ public:
 		TVP_free(inst);
 	}
 
+	// check instance
+	static bool IsExistInstance() { return !InstanceList.empty(); }
+
 	// instance foreach
 	template <class T>
 	static void Foreach(T &op, bool withclear = false) {
@@ -281,6 +284,8 @@ IDirect3D9* Krkr2DrawDeviceWrapper::SwitchGetDirect3DObjectNoAddRef() const
 }
 void Krkr2DrawDeviceWrapper::DetachAll()
 {
+	if (!kz2_tTVPDrawDevice::IsExistInstance()) return;
+
 	class Disabler {
 		void ** vfptr;
 		// ダミーの仮想関数テーブルを作成
