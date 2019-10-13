@@ -205,6 +205,7 @@ class tTVPMultiLayerManagerSet : public tTVPLayerManagerSet
 };
 
 //---------------------------------------------------------------------------
+// DrawDeviceŠî‘bŽÀ‘•
 
 template <class MANAGERSET>
 class tTVPDrawDeviceTmpl : public iTVPDrawDevice
