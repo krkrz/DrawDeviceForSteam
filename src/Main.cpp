@@ -1,74 +1,52 @@
 #include <windows.h>
 #include "tp_stub.h"
-#include "simplebinder.hpp"
 
 #include "DrawDeviceForSteam.hpp"
-#include "Krkr2DrawDeviceWrapper.hpp"
+#include "DrawDeviceTmpl.hpp"
+#include "PluginName.h"
+
+// 吉里吉里2上での動作が不要であれば0にする
+#ifndef USE_K2DD
+#define USE_K2DD 1
+#endif
 
 #ifndef USE_TJSTEST
 #define USE_TJSTEST 0
 #endif
 
-// 破棄通知インターフェース
-struct iDeviceDestructNotify {
-	virtual void onDeviceDestruct() = 0;
-};
-
 // このプラグインで提供するDrawDeviceクラス（tTVPBasicDrawDeviceForSteam +α）
-class DrawDeviceInterface
-	: public tTVPDrawDeviceForSteam {
-	typedef  tTVPDrawDeviceForSteam inherited;
-	iDeviceDestructNotify *owner;
-	Krkr2DrawDeviceWrapper k2dd; // 吉里吉里2向けDrawDeviceインターフェース互換ラッパー
+#if USE_K2DD
+class DrawDeviceInterface : public DrawDeviceIntfTmpl<tTVPDrawDeviceForSteam>
+{
 public:
-	DrawDeviceInterface(iDeviceDestructNotify *owner) : owner(owner), k2dd(this), inherited() {}
-	virtual void TJS_INTF_METHOD Destruct() {
-		owner->onDeviceDestruct(); // TJSクラスインスタンス側に破棄通知
-		inherited::Destruct();
-	}
-	tTVInteger GetInterface() const { return k2dd.SwitchGetInterface(); } // 吉里吉里Zか2でインターフェースを自動で切り替える
-
 	// 吉里吉里Z通常処理/吉里吉里2互換処理の切り替え
 	virtual void        EnsureDirect3DObject()      const {        k2dd.SwitchEnsureDirect3DObject();      }
 	virtual IDirect3D9* GetDirect3DObjectNoAddRef() const { return k2dd.SwitchGetDirect3DObjectNoAddRef(); }
 };
-
+#else
+class DrawDeviceInterface : public DrawDeviceIntfTmpl<tTVPDrawDeviceForSteam, false> {};
+#endif
 
 ////////////////////////////////////////////////////////////////
 // TJS空間にDrawDeviceクラスを登録
 
-class DrawDeviceClass : public iDeviceDestructNotify {
-	DrawDeviceInterface *ddi;
-public:
-	DrawDeviceClass() : ddi(0)
-	{
-		ddi = new DrawDeviceInterface(this);
-	}
-	~DrawDeviceClass() {
-		if (ddi) ddi->Destruct();
-		ClearInterface();
-	}
-	virtual void onDeviceDestruct() { ClearInterface(); } // called from iDeviceDestructNotify
-	void ClearInterface() {
-		ddi = 0;
+class DrawDeviceClass : public iDeviceDestructNotify
+{
+	// 定型マクロ展開
+	DRAWDEVICECLASS_ENTRY(DrawDeviceClass, DrawDeviceInterface, ddi);
+
+private:
+	static const tjs_char* GetName() { return PLUGIN_NAME; }
+
+	static DrawDeviceClass* Create(tjs_int num, tTJSVariant **args) {
+		return new DrawDeviceClass();
 	}
 
-	static tjs_error CreateNew(iTJSDispatch2 *objthis, DrawDeviceClass* &inst, tjs_int num, tTJSVariant **args) {
-		inst = new DrawDeviceClass();
-		return TJS_S_OK;
-	}
-	static bool Link(const tjs_char *name, bool link) {
-		return (SimpleBinder::BindUtil(link)
-		 .Class(name, &CreateNew)
-		 .Property(TJS_W("interface"),   &GetInterface, 0)
-		 .Function(TJS_W("recreate"),    &Recreate)
-		 .Function(TJS_W("present"),     &Present)
-		 .IsValid());
-	}
-
-	tjs_error GetInterface(tTJSVariant *result) const {
-		if (result) *result = ddi ? ddi->GetInterface() : 0;
-		return TJS_S_OK;
+	static bool LinkOthers(SimpleBinder::BindUtil &bind) {
+		return (bind
+				.Function(TJS_W("recreate"),    &Recreate)
+				.Function(TJS_W("present"),     &Present)
+				.IsValid());
 	}
 
 	tjs_error Recreate(tTJSVariant *result) {
@@ -126,14 +104,25 @@ struct TJSTestCode {
 
 bool Entry(bool link) {
 	return (
-		DrawDeviceClass::Link(TJS_W("DrawDeviceForSteam"), link) &&
+		DrawDeviceClass::Link(link) &&
 #if USE_TJSTEST
 		TJSTestCode::Link(link) &&
 #endif
 		true);
 }
 
-bool onV2Link()   {                                      return Entry(true);  }
-bool onV2Unlink() { Krkr2DrawDeviceWrapper::DetachAll(); return Entry(false); }
-void onV2Detach() { Krkr2DrawDeviceWrapper::DetachAll(); }
+static void InitPlugin() {
+#if (! USE_K2DD)
+	extern bool IsKirikiri2();
+	if (IsKirikiri2()) TVPThrowExceptionMessage(TJS_W("%1: krkr2 not supported"), PLUGIN_NAME);
+#endif
+}
+static void QuitPlugin() {
+#if USE_K2DD
+	Krkr2DrawDeviceWrapper::DetachAll();
+#endif
+}
+bool onV2Link()   { InitPlugin(); return Entry(true);  }
+bool onV2Unlink() { QuitPlugin(); return Entry(false); }
+void onV2Detach() { QuitPlugin(); }
 

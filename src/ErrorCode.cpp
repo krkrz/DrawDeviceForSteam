@@ -1,8 +1,6 @@
 #include "ErrorCode.hpp"
 
-#ifndef REPLACE_BDD
-#define REPLACE_BDD TJS_W("DrawDeviceForSteam") // [XXX] ”Ä—p‚Å‚È‚¢ŽÀ‘•
-#endif
+#include "PluginName.h"
 
 struct KeyText {
 	const char * key;
@@ -27,7 +25,7 @@ static bool GetErrorCodeText(int code, ttstr &text) {
 		text = ttstr(ErrorCodeMap[code].text);
 	}
 	if (text.StartsWith(TJS_W("BasicDrawDevice"))) {
-		text = ttstr(REPLACE_BDD) + ttstr(text.c_str() + 15); // 15="BasicDrawDevice".length
+		text = ttstr(PLUGIN_NAME) + ttstr(text.c_str() + 15); // 15="BasicDrawDevice".length
 	}
 	return true;
 }
@@ -38,7 +36,7 @@ namespace Logger
 	static ttstr GetMessage(int code) {
 		ttstr text;
 		if (!GetErrorCodeText(code, text)) {
-			text = TVPFormatMessage(TJS_W("%1 UnknownInternalErrorCode: %2"), ttstr(REPLACE_BDD), ttstr(code));
+			text = TVPFormatMessage(TJS_W("%1 UnknownInternalErrorCode: %2"), ttstr(PLUGIN_NAME), ttstr(code));
 		}
 		return text;
 	}
