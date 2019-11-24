@@ -118,7 +118,7 @@ public:
 	// factory method
 	static selfclass *Create(iTVPDrawDevice *kzdd) {
 		if (!kzdd) return NULL;
-		void *ptr = TVP_malloc(sizeof selfclass);
+		void *ptr = TVP_malloc(sizeof(selfclass));
 		selfclass *r = new(ptr) selfclass(*kzdd); // placement new
 		AddInstance(r);
 		return r;
@@ -153,7 +153,7 @@ protected:
 // LayerManager変換メソッド呼び出しマクロ
 #define FINDLM(k2lm, manager, method, args) do { \
 	iTVPLayerManager *manager = findLayerManager(k2lm); \
-	if (manager) dd. ## method ## args; \
+	if (manager) dd.method args ; \
 	} while(0)
 public:
 	// 表記短縮用typedef
@@ -401,7 +401,19 @@ iTJSDispatch2 * k2z_tTVPWindow::GetWindowDispatch(k2_iTVPWindow *window) {
 }
 #pragma optimize("", on)
 
-//#elif defined(__GNUC__)
+#elif defined(__GNUC__)
+iTJSDispatch2 * __attribute__((optimize("O0"))) k2z_tTVPWindow::GetWindowDispatch(k2_iTVPWindow *window) {
+	void *method = (*(reinterpret_cast<void***>(window)))[12]; // __vfptr[12] == GetWindowDispatch
+	iTJSDispatch2 * result = 0;
+	__asm__ volatile ("mov %%eax, %1\n\t" // eax = this
+		"call *%2\n\t"
+		"mov %0, %%eax\n\t"
+		: "=r"(result)
+		: "r"(window), "r"(method)
+		: "%eax"
+	);
+	return result;
+}
 #else
 #error GetWindowDispatch : compiler not supported.
 // do nothing
